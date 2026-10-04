@@ -150,4 +150,6 @@ async def run_check(question):
     _, base, err = await baseline_task
     if base:
         yield {"type": "baseline", **base}
+    elif err:
+        yield {"type": "baseline_error", "error": err}
     yield {"type": "done"}
