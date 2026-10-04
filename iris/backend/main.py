@@ -42,9 +42,6 @@ async def check(body: CheckIn):
                 yield f"data: {json.dumps(event)}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'error': str(e)})}\n\n"
-        finally:
-            yield "data: {\"type\": \"done\"}\n\n"
-
     return StreamingResponse(
         stream(),
         media_type="text/event-stream",
