@@ -3,11 +3,13 @@
 Four agents (Researcher, Skeptic, Fact-checker, Devil's advocate) check a statement, then a judge writes the answer, confidence and open doubts.
 
 ## Open it
-Double-click `index.html`. No install, no internet needed for Demo mode.
+Download the repository ZIP, extract it, open the `iris` folder, and double-click **`index.html`**. The page is self-contained, so the polished UI does not depend on a local web server.
 
-Modes (top right):
-- Demo: saved Einstein run, works offline. Use this for the presentation.
-- Live: pick a provider and model for each seat under "Configure models" (click "Load available models" to see what Gemini and Ollama really offer). Ollama needs `OLLAMA_ORIGINS=* ollama serve`; Gemini needs a key from Google AI Studio and internet.
+Modes:
+- Demo: saved Einstein investigation, works offline and needs no API key.
+- Live: enter a Gemini API key under "Model routing & API settings", use "Test Gemini connection", then run your own claim. Ollama is supported when it is running locally.
+
+For the simplest jury demo, use **Demo mode** first. Live mode is there for showing the real Gemini-backed pipeline.
 
 ## Optional Python backend
 The Python backend is the server-side API version of the same pipeline. It keeps the Gemini key on the server, streams agent events over SSE, and supports Gemini or local Ollama providers.
