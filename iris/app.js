@@ -59,7 +59,9 @@
     $("premise").hidden = !v.premise_flag;
     $("premise").querySelector("p").textContent = v.premise_flag || "";
     $("answer").textContent = v.answer;
-    $("conf").textContent = v.confidence.charAt(0).toUpperCase() + v.confidence.slice(1);
+    var confidence = ["high", "medium", "low"].indexOf(String(v.confidence).toLowerCase()) > -1 ? String(v.confidence).toLowerCase() : "low";
+    $("conf").textContent = confidence;
+    $("confbar").style.width = confidence === "high" ? "92%" : confidence === "medium" ? "62%" : "30%";
     var ul = $("doubts"); ul.textContent = "";
     var items = v.open_doubts.length ? v.open_doubts : ["None"];
     items.forEach(function (d) { var li = document.createElement("li"); li.textContent = d; ul.append(li); });
