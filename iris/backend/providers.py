@@ -62,7 +62,7 @@ async def call_ollama(model, system, prompt, json_mode=False):
         r = await client.post(f"{host}/api/chat", json=body)
     if r.status_code != 200:
         raise ProviderError(f"Ollama {r.status_code}: {r.text[:200]}")
-    return r.json().get("message", {}).get("content", "").strip(), []
+    payload = r.json()\n    text = payload.get("message", {}).get("content", "").strip()\n    if not text:\n        raise ProviderError("Ollama returned an empty response")\n    return text, []
 
 
 async def _call(spec, system, prompt, search, json_mode):
