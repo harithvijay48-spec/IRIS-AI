@@ -5,7 +5,7 @@ import re
 
 from providers import ProviderError, ask  # loads .env
 
-DEFAULT = os.getenv("DEFAULT_MODEL", "gemini:gemini-2.5-flash")
+DEFAULT = os.getenv("DEFAULT_MODEL", "gemini:gemini-3.8-flash")
 
 # Which model sits in which seat. Change these in .env, no code edits needed.
 SEATS = {
