@@ -1,305 +1,112 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Iris — Multi-Agent Fact Checking</title>
-<style id="iris-styles">
-:root{--ink:#17141f;--ink-soft:#302a3a;--mute:#756d80;--line:#e7e0ee;--line-strong:#d6cbe1;--bg:#f7f4fa;--surface:#fff;--accent:#6845d6;--accent-strong:#5130bd;--accent-soft:#f0ebff;--accent-glow:rgba(104,69,214,.16);--success:#18794e;--warn-bg:#fff5ec;--warn-line:#e7b88f;--warn-ink:#8a3f0f;--shadow:0 14px 40px rgba(47,29,72,.08);--shadow-soft:0 5px 18px rgba(47,29,72,.06)}
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(circle at 12% -8%,rgba(130,91,226,.13),transparent 34rem),radial-gradient(circle at 90% 5%,rgba(202,177,255,.12),transparent 30rem),var(--bg);color:var(--ink);font:15px/1.55 "Segoe UI",system-ui,-apple-system,BlinkMacSystemFont,"Roboto",sans-serif}header{position:sticky;top:0;z-index:10;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px clamp(18px,4vw,44px);background:rgba(255,255,255,.9);backdrop-filter:blur(18px);border-bottom:1px solid rgba(214,203,225,.85)}.logo-wrap{display:flex;align-items:center;gap:10px}.logo-mark{display:grid;place-items:center;width:34px;height:34px;border-radius:11px;color:#fff;background:linear-gradient(135deg,var(--accent),#8b63ec);box-shadow:0 7px 18px var(--accent-glow);font-weight:800}.logo{font-size:20px;letter-spacing:-.03em}.mode{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--mute)}
-main{max-width:1180px;margin:0 auto;padding:50px 24px 76px;display:flex;flex-direction:column;gap:22px}.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end}.eyebrow{display:inline-flex;align-items:center;gap:7px;margin-bottom:11px;color:var(--accent-strong);font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.eyebrow:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px var(--accent-soft)}h1{margin:0;font-size:clamp(34px,5vw,54px);line-height:1.02;letter-spacing:-.045em;max-width:780px}.lead{margin:14px 0 0;color:var(--mute);max-width:690px;font-size:16px}.hero-badge{justify-self:end;padding:10px 13px;border:1px solid var(--line-strong);border-radius:999px;background:rgba(255,255,255,.75);color:var(--mute);font-size:12px;font-weight:700;white-space:nowrap}
-.pipeline{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:4px 0 2px}.pipe-step{position:relative;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:rgba(255,255,255,.68);box-shadow:var(--shadow-soft)}.pipe-step:not(:last-child):after{content:"→";position:absolute;right:-13px;top:50%;transform:translateY(-50%);z-index:2;color:#a99bb8;background:var(--bg);padding:0 3px;font-weight:800}.pipe-kicker{display:block;color:var(--mute);font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}.pipe-label{display:block;margin-top:2px;font-weight:700}
-.card,details{background:rgba(255,255,255,.94);border:1px solid var(--line);border-radius:15px;box-shadow:var(--shadow-soft)}.card{padding:20px}details{padding:12px 17px;font-size:14px}details[open]{box-shadow:var(--shadow)}summary{cursor:pointer;font-weight:700;color:var(--ink-soft)}label{font-size:13px;font-weight:700}input,select,textarea{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line-strong);border-radius:9px;padding:9px 11px;transition:border-color .18s,box-shadow .18s}input:focus,select:focus,textarea:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft);outline:0}textarea{width:100%;resize:vertical;min-height:106px;margin:9px 0 13px;padding:14px;font-size:17px;line-height:1.5}.row{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.spacer{flex:1}button{font:inherit;font-size:13px;min-height:42px;padding:0 16px;border-radius:9px;cursor:pointer;transition:transform .15s,box-shadow .15s}button:hover:not(:disabled){transform:translateY(-1px)}.ghost{background:#fff;color:var(--ink-soft);border:1px solid var(--line-strong)}.primary{background:linear-gradient(135deg,var(--accent),var(--accent-strong));color:#fff;border:0;font-weight:800;padding-inline:21px;box-shadow:0 9px 20px var(--accent-glow)}button:disabled{opacity:.5;cursor:default}:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-.question-card{padding:22px}.question-head{display:flex;justify-content:space-between;gap:16px;align-items:center}.question-hint{color:var(--mute);font-size:12px}.hint{color:var(--mute);margin:10px 0 0;font-size:12px}.notice{margin:0;padding:11px 14px;border:1px solid #ddd1f5;border-radius:10px;background:var(--accent-soft);color:#4b3389;font-size:13px}.cols{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(360px,.95fr);gap:26px;align-items:start}.col{min-width:0;display:flex;flex-direction:column;gap:12px}.section-head{display:flex;align-items:end;justify-content:space-between;gap:12px;margin:2px 2px 1px}h2{margin:0;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--mute)}.section-count{font-size:11px;color:#9b90a5}
-.lane{position:relative;overflow:hidden;background:rgba(255,255,255,.96);border:1px solid var(--line);border-radius:14px;padding:17px 18px 16px 20px;box-shadow:var(--shadow-soft);transition:border-color .2s,box-shadow .2s,transform .2s}.lane:before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--line-strong)}.lane.working{border-color:#c9bbeb;box-shadow:0 8px 28px rgba(104,69,214,.12);transform:translateY(-1px)}.lane.working:before{background:linear-gradient(var(--accent),#a587ef);animation:pulseBar 1.1s ease-in-out infinite alternate}.lane.error{border-color:var(--warn-line);background:#fffaf6}.lane.error:before{background:var(--warn-line)}.lane.done:before{background:var(--success)}.lane .head{display:flex;justify-content:space-between;gap:12px;align-items:center}.lane .head b{font-size:15px}.lane .head span{font-size:11px;color:var(--mute);font-weight:700}.lane p{margin:7px 0 0}.lane .body{color:var(--ink-soft)}.lane.working .body,.lane.error .body{color:var(--mute);font-size:13px}.src{font-size:12px;color:var(--accent);margin-top:10px!important}.src:empty{display:none}.src a{color:var(--accent);font-weight:600}
-.flag{background:var(--warn-bg);border:1px solid var(--warn-line);border-radius:13px;padding:15px 17px;color:#4A2408;box-shadow:var(--shadow-soft)}.flag b{font-size:11px;color:var(--warn-ink);letter-spacing:.1em;text-transform:uppercase}.flag p{margin:5px 0 0}.final{position:relative;overflow:hidden;border:1px solid #cdbdf0;background:linear-gradient(145deg,#fff 45%,#faf7ff);box-shadow:0 18px 45px rgba(73,43,123,.12);padding:23px}.final:before{content:"";position:absolute;inset:0 auto 0 0;width:5px;background:linear-gradient(var(--accent),#9a7aee)}.final-kicker{display:flex;align-items:center;justify-content:space-between;gap:12px}.verdict-badge{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:var(--accent-soft);color:var(--accent-strong);font-size:10px;font-weight:800;letter-spacing:.09em;text-transform:uppercase}.verdict-badge:before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}.answer{font-size:22px;font-weight:650;line-height:1.35;letter-spacing:-.018em;margin:13px 0 16px}.confidence-row{display:flex;align-items:center;gap:10px;margin:0 0 16px}.confidence-track{flex:1;height:6px;background:#eee8f5;border-radius:99px;overflow:hidden}.confidence-fill{height:100%;width:0;border-radius:inherit;background:linear-gradient(90deg,#b29ae9,var(--accent));transition:width .35s ease}.confidence-label{font-size:12px;font-weight:800;color:var(--accent-strong);text-transform:uppercase;letter-spacing:.06em}.meta{margin:7px 0;font-size:13px}.doubts-label{margin-top:15px!important;color:var(--mute);font-size:11px!important;font-weight:800;letter-spacing:.1em;text-transform:uppercase}.muted{color:var(--mute);font-size:12px}.judge-card{display:flex;align-items:center;gap:12px}.judge-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 5px var(--accent-soft);animation:pulseDot 1.2s ease-in-out infinite}ul{margin:5px 0 0;padding-left:20px;font-size:13px;color:var(--ink-soft)}.card p{margin:8px 0 0}code{background:var(--accent-soft);padding:2px 6px;border-radius:5px}.keyl{display:flex;flex-direction:column;gap:5px;margin-top:12px;max-width:420px}.cfg{margin:12px 0 4px}.seat{display:grid;grid-template-columns:150px 110px 1fr;gap:8px;align-items:center;margin-top:8px}.seat.all{grid-template-columns:150px 110px 1fr auto;padding-bottom:10px;border-bottom:1px solid var(--line)}.sname{font-weight:700;color:var(--ink-soft)}.warn{grid-column:2 / -1;font-size:12px;color:var(--warn-ink)}.warn:empty{display:none}@keyframes pulseBar{from{opacity:.45}to{opacity:1}}@keyframes pulseDot{50%{box-shadow:0 0 0 8px rgba(104,69,214,.04)}}
-@media (max-width:820px){.hero{grid-template-columns:1fr}.hero-badge{justify-self:start}.pipeline{grid-template-columns:1fr 1fr}.pipe-step:nth-child(2):after{display:none}.cols{grid-template-columns:1fr}}
-@media (max-width:560px){header{padding:12px 16px}main{padding:34px 15px 52px}h1{font-size:36px}.mode label{display:none}.pipeline{grid-template-columns:1fr}.pipe-step:after{display:none!important}.cols{display:flex;flex-direction:column}.col{width:100%}.seat,.seat.all{grid-template-columns:1fr 1fr}.seat input{grid-column:1 / -1}.warn{grid-column:1 / -1}}
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Iris — Fact Intelligence</title>
+<style>
+:root{--bg:#0b0910;--panel:#121018;--line:#292431;--line2:#383140;--text:#f7f5fb;--muted:#a49cab;--purple:#9b7cf4;--purple2:#6d4bd3;--cyan:#65d9ff;--green:#8ce99a;--amber:#ffc86b;--red:#ff8d93;--shadow:0 24px 60px rgba(0,0,0,.28)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;min-height:100vh;background:radial-gradient(800px 500px at 8% -5%,rgba(125,79,255,.18),transparent 65%),radial-gradient(650px 480px at 92% 0%,rgba(59,183,255,.10),transparent 68%),linear-gradient(180deg,#0b0910 0%,#0e0c13 100%);color:var(--text);font:14px/1.55 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{cursor:not-allowed;opacity:.52}
+header{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;padding:14px clamp(16px,4vw,42px);border-bottom:1px solid rgba(255,255,255,.06);background:rgba(11,9,16,.82);backdrop-filter:blur(18px)}
+.brand{display:flex;align-items:center;gap:11px}.mark{width:36px;height:36px;display:grid;place-items:center;border-radius:12px;background:linear-gradient(135deg,var(--purple2),#b09afb);box-shadow:0 10px 28px rgba(118,82,224,.35);font-weight:900}.brand-copy{display:flex;flex-direction:column;line-height:1.05}.brand-copy strong{font-size:17px;letter-spacing:-.02em}.brand-copy span{font-size:9px;color:var(--muted);letter-spacing:.18em;text-transform:uppercase;margin-top:4px}
+.header-right{display:flex;align-items:center;gap:10px}.status-pill,.mode-wrap{border:1px solid var(--line);background:rgba(255,255,255,.035);border-radius:999px;padding:7px 10px}.status-pill{display:flex;gap:7px;align-items:center;font-size:11px;color:var(--muted)}.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}.mode-wrap{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:11px}.mode-wrap select{border:0;background:transparent;color:var(--text);outline:0}
+main{width:min(1240px,calc(100% - 32px));margin:0 auto;padding:48px 0 84px}.hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,.7fr);gap:28px;align-items:end}.eyebrow{display:flex;align-items:center;gap:8px;color:var(--purple);font-size:10px;font-weight:800;letter-spacing:.18em;text-transform:uppercase}.eyebrow i{width:7px;height:7px;border-radius:50%;background:var(--purple);box-shadow:0 0 0 5px rgba(155,124,244,.10)}h1{margin:13px 0 0;font-size:clamp(42px,6vw,72px);line-height:.96;letter-spacing:-.055em;max-width:790px}.lead{max-width:700px;margin:18px 0 0;color:var(--muted);font-size:16px}
+.hero-side{border:1px solid var(--line);background:linear-gradient(150deg,rgba(255,255,255,.055),rgba(255,255,255,.02));border-radius:20px;padding:18px;box-shadow:var(--shadow)}.hero-side .tiny{color:var(--muted);font-size:10px;text-transform:uppercase;letter-spacing:.14em;font-weight:800}.flow{display:grid;gap:9px;margin-top:14px}.flow div{display:flex;align-items:center;justify-content:space-between;padding:10px 11px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.025)}.flow b{font-size:12px}.flow span{font-size:11px;color:var(--muted)}
+.section{margin-top:28px}.input-card,.settings,.panel-card,.verdict-card{border:1px solid var(--line);background:linear-gradient(160deg,rgba(255,255,255,.045),rgba(255,255,255,.018));border-radius:20px;box-shadow:var(--shadow)}.input-card{padding:22px}.input-top{display:flex;justify-content:space-between;align-items:center;gap:12px}.input-top label{font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:800}.input-top span{font-size:11px;color:#756d7d}
+textarea{width:100%;min-height:118px;margin-top:11px;padding:16px 17px;resize:vertical;background:#0f0c15;color:var(--text);border:1px solid var(--line2);border-radius:14px;outline:0;font-size:18px;line-height:1.5}textarea:focus{border-color:rgba(155,124,244,.75);box-shadow:0 0 0 4px rgba(155,124,244,.08)}
+.actions{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:13px}.spacer{flex:1}.btn{min-height:42px;padding:0 14px;border-radius:11px;border:1px solid var(--line2);background:#15111b;color:var(--text);font-weight:700;font-size:12px}.btn:hover{border-color:#4a4154;transform:translateY(-1px)}.btn.primary{border:0;background:linear-gradient(135deg,#7d5be5,#5d3dc3);box-shadow:0 12px 28px rgba(104,69,214,.28)}.btn.example{color:#c8bdfd;background:rgba(155,124,244,.08);border-color:rgba(155,124,244,.24)}
+.notice{margin-top:13px;padding:11px 13px;border-radius:12px;border:1px solid rgba(155,124,244,.18);background:rgba(155,124,244,.07);color:#c8bfd7;font-size:12px}
+.settings{margin-top:14px;padding:14px 17px}.settings summary{cursor:pointer;color:#ddd6e6;font-weight:800;font-size:12px;letter-spacing:.04em}.settings-body{padding-top:15px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:11px}.field{display:flex;flex-direction:column;gap:6px}.field label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.12em;font-weight:800}input,select{min-height:40px;padding:9px 11px;background:#0f0c15;color:var(--text);border:1px solid var(--line2);border-radius:10px;outline:0}input:focus,select:focus{border-color:rgba(155,124,244,.65);box-shadow:0 0 0 4px rgba(155,124,244,.07)}.settings-actions{display:flex;align-items:center;gap:9px;margin-top:12px;flex-wrap:wrap}.settings-status{font-size:11px;color:var(--muted)}
+.seat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-top:12px}.seat-config{border:1px solid var(--line);border-radius:12px;padding:11px;background:rgba(255,255,255,.018)}.seat-config b{display:block;font-size:11px}.seat-config span{display:block;color:var(--muted);font-size:10px;margin-top:2px}
+.progress{display:none;margin-top:26px}.progress.show{display:block}.progress-head{display:flex;justify-content:space-between;align-items:end;margin-bottom:10px}.progress-head h2{margin:0;font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted)}.progress-head span{font-size:11px;color:var(--muted)}.bar{height:5px;background:#201a28;border-radius:99px;overflow:hidden}.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--purple2),var(--cyan));transition:width .35s ease}
+.results{display:none;margin-top:18px}.results.show{display:block}.results-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.panel-card{padding:16px}.panel-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px}.panel-head h2{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0}.panel-head span{font-size:10px;color:#756d7d}.agents{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.agent{position:relative;border:1px solid var(--line);border-radius:15px;padding:14px;background:#100d15;min-height:158px;overflow:hidden}.agent:before{content:"";position:absolute;left:0;top:0;bottom:0;width:3px;background:#332b3c}.agent.working{border-color:#463b59}.agent.working:before{background:var(--purple);animation:pulse 1s infinite alternate}.agent.done:before{background:var(--green)}.agent.error{border-color:#4a2b32}.agent.error:before{background:var(--red)}.agent-top{display:flex;align-items:center;justify-content:space-between;gap:8px}.agent-id{display:flex;align-items:center;gap:9px}.agent-icon{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;background:#1c1724;color:#cfc5ff;font-weight:900;font-size:11px}.agent-name{font-size:12px;font-weight:900}.agent-role{font-size:9px;color:var(--muted);margin-top:1px}.state{font-size:9px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;color:var(--muted)}.agent-body{margin:13px 0 0;color:#d7d1dd;font-size:12px;line-height:1.55}.agent.working .agent-body{color:var(--muted)}.source{margin-top:11px;font-size:10px;color:#a997e8;line-height:1.45}.source a{color:#a997e8}
+.verdict-card{padding:21px;background:linear-gradient(155deg,rgba(155,124,244,.12),rgba(255,255,255,.03) 48%,rgba(101,217,255,.055))}.verdict-top{display:flex;justify-content:space-between;gap:10px;align-items:center}.verdict-label{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#bca9fb;font-weight:900}.badge{padding:6px 8px;border-radius:999px;background:rgba(140,233,154,.08);border:1px solid rgba(140,233,154,.18);color:var(--green);font-size:9px;font-weight:900;text-transform:uppercase;letter-spacing:.12em}.answer{font-size:28px;line-height:1.18;letter-spacing:-.03em;font-weight:800;margin:16px 0 19px}.flag{border:1px solid rgba(255,200,107,.22);background:rgba(255,200,107,.07);border-radius:12px;padding:11px 12px;color:#ffdc9b;font-size:11px}.flag b{font-size:9px;text-transform:uppercase;letter-spacing:.13em;display:block;margin-bottom:4px}.confidence{display:flex;align-items:center;gap:10px}.confidence-track{height:7px;flex:1;border-radius:99px;background:#241e2e;overflow:hidden}.confidence-track i{display:block;height:100%;width:0;background:linear-gradient(90deg,#6f52cf,#bda4ff);transition:width .4s}.confidence span{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:900;color:#c9bcff}.doubts-title{font-size:9px;text-transform:uppercase;letter-spacing:.14em;color:var(--muted);font-weight:900;margin:19px 0 7px}.doubts{margin:0;padding-left:17px;color:#bcb4c3;font-size:11px}.baseline{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;color:#938b9b;font-size:11px}.baseline b{color:#c8c0cd;font-size:9px;text-transform:uppercase;letter-spacing:.12em;display:block;margin-bottom:4px}.empty{color:#7f7787;font-size:11px;padding:18px 4px}
+@keyframes pulse{from{opacity:.45}to{opacity:1}}
+@media(max-width:900px){.hero{grid-template-columns:1fr}.results-grid{grid-template-columns:1fr}.seat-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){header{padding:12px 15px}.status-pill{display:none}main{width:min(100% - 22px,1240px);padding:34px 0 56px}h1{font-size:43px}.lead{font-size:14px}.input-card,.panel-card,.verdict-card{border-radius:16px}.grid,.seat-grid,.agents{grid-template-columns:1fr}.actions{align-items:stretch}.actions .btn.primary{width:100%}.spacer{display:none}.header-right{gap:6px}}
 </style>
-<script id="iris-app">
-(function () {
-  var $ = function (id) { return document.getElementById(id); };
-  var LANES = ["researcher", "skeptic", "factchecker", "advocate"];
-  var BASE = "You are one member of a fact-checking panel. Be concise, under 120 words, no preamble. ";
-  var ROLES = {
-    researcher: ["Answer the statement or question directly and accurately. State your answer first.", false],
-    skeptic: ["Do not answer yet. Check the premise: does the statement or question assume anything false, unproven or ambiguous? Say what and why. If the premise is sound, say so plainly.", false],
-    factchecker: ["Use search. List the key factual claims and mark each supported, contradicted or unclear, with one line of evidence. Never guess. Say unclear if you cannot find a source.", true],
-    advocate: ["You have read the panel's first-round notes. Argue against the group's emerging view: give the strongest reason it could be wrong or incomplete. If there is no real objection, say so plainly instead of inventing one.", false]
-  };
-  var JUDGE = "You are the judge of a fact-checking panel. Use only the panel notes. Prefer claims the fact-checker supported with a source. Anything still contested goes in open_doubts. Reply with JSON only, with exactly these keys: \"answer\" (string), \"confidence\" (\"high\", \"medium\" or \"low\"), \"premise_flag\" (string describing a false assumption in the question, or null), \"open_doubts\" (array of strings, empty if none).";
-  var DEMO = {
-    researcher: "Einstein won the Nobel Prize in Physics in 1921.",
-    skeptic: "The question says relativity. Was the prize actually given for that? The premise needs checking before the year does.",
-    factchecker: "The 1921 prize was awarded for his services to theoretical physics, especially the law of the photoelectric effect. Relativity was not the stated reason.",
-    advocate: "Relativity is what he is best known for, so the mix-up is common. But the citation does not name it, so the premise fails.",
-    verdict: { answer: "1921, but for the photoelectric effect, not relativity.", confidence: "high", premise_flag: "The question assumes the prize was for relativity. It was not.", open_doubts: [] },
-    baseline: "Einstein won the Nobel Prize in Physics in 1921 for his theory of relativity."
-  };
-  var SEATS = [["researcher", "Researcher"], ["skeptic", "Skeptic"], ["factchecker", "Fact-checker"], ["advocate", "Devil's advocate"], ["judge", "Judge"], ["baseline", "Single-model comparison"]];
-  var OLLAMA = "http://localhost:11434";
-  var MODELS = { gemini: [], ollama: [] };
-  var S = { mode: "demo", key: "", seats: {} };
-  try { Object.assign(S, JSON.parse(localStorage.getItem("iris") || "{}")); } catch (e) {}
-  S.key = "";
-  if (window.location.protocol === "file:") S.mode = "demo";
-  else if (S.mode !== "demo") S.mode = "live";
-  S.seats = S.seats || {};
-  SEATS.forEach(function (s) { if (!S.seats[s[0]]) S.seats[s[0]] = { p: "gemini", m: "gemini-3.8-flash" }; });
-  var running = false;
-
-  function save() {
-    S.mode = $("mode").value; S.key = $("key").value.trim();
-    try { var safe = JSON.parse(JSON.stringify(S)); safe.key = ""; localStorage.setItem("iris", JSON.stringify(safe)); } catch (e) {}
-  }
-  function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
-  function note(t) { $("note").hidden = !t; $("note").textContent = t || ""; }
-
-  function setLane(name, state, text, sources) {
-    var el = $("lane-" + name);
-    el.hidden = false;
-    el.className = "lane " + state;
-    el.querySelector(".body").textContent = state === "working" ? "Working on it…" : (text || "");
-    var src = el.querySelector(".src");
-    src.textContent = "";
-    if (sources && sources.length) {
-      src.append("Sources: ");
-      sources.slice(0, 3).forEach(function (s, i) {
-        if (i) src.append(", ");
-        if (/^https?:\/\//.test(s.url)) {
-          var a = document.createElement("a");
-          a.href = s.url; a.target = "_blank"; a.rel = "noopener"; a.textContent = s.title || s.url;
-          src.append(a);
-        } else { src.append(s.title || s.url); }
-      });
-    }
-  }
-
-  function showVerdict(v) {
-    $("judging").hidden = true;
-    $("premise").hidden = !v.premise_flag;
-    $("premise").querySelector("p").textContent = v.premise_flag || "";
-    $("answer").textContent = v.answer;
-    var confidence = ["high", "medium", "low"].indexOf(String(v.confidence).toLowerCase()) > -1 ? String(v.confidence).toLowerCase() : "low";
-    $("conf").textContent = confidence;
-    $("confbar").style.width = confidence === "high" ? "92%" : confidence === "medium" ? "62%" : "30%";
-    var ul = $("doubts"); ul.textContent = "";
-    var items = v.open_doubts.length ? v.open_doubts : ["None"];
-    items.forEach(function (d) { var li = document.createElement("li"); li.textContent = d; ul.append(li); });
-    $("verdict").hidden = false;
-  }
-
-  function resetView() {
-    LANES.forEach(function (n) { $("lane-" + n).hidden = true; });
-    ["premise", "verdict", "base", "judging"].forEach(function (id) { $(id).hidden = true; });
-    $("results").hidden = true; note("");
-  }
-
-  async function gemini(model, system, prompt, search, json) {
-    if (!S.key) throw new Error("Add your Gemini key in Settings.");
-    var body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: {} };
-    if (search) body.tools = [{ google_search: {} }];
-    if (json) body.generationConfig.responseMimeType = "application/json";
-    if (!/^gemini-3\./.test(model)) body.generationConfig.temperature = 0.3;
-    var r;
-    try {
-      r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
-        method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": S.key }, body: JSON.stringify(body)
-      });
-    } catch (e) { throw new Error("Cannot reach Gemini. Check your internet connection."); }
-    if (!r.ok) throw new Error("Gemini " + r.status + ": " + (await r.text()).slice(0, 160));
-    var c = ((await r.json()).candidates || [{}])[0];
-    var text = (((c.content || {}).parts) || []).map(function (p) { return p.text || ""; }).join("").trim();
-    var sources = (((c.groundingMetadata || {}).groundingChunks) || []).filter(function (x) { return x.web; })
-      .map(function (x) { return { title: x.web.title || x.web.uri, url: x.web.uri }; });
-    return { text: text, sources: sources };
-  }
-
-  async function ollama(model, system, prompt, json) {
-    var body = { model: model, stream: false, options: { temperature: 0.3 }, messages: [{ role: "system", content: system }, { role: "user", content: prompt }] };
-    if (json) body.format = "json";
-    var r;
-    try {
-      r = await fetch(OLLAMA + "/api/chat", { method: "POST", body: JSON.stringify(body) });
-    } catch (e) { throw new Error("Cannot reach Ollama. Start it with OLLAMA_ORIGINS=* ollama serve"); }
-    if (!r.ok) throw new Error("Ollama " + r.status + ": " + (await r.text()).slice(0, 160));
-    return { text: (((await r.json()).message || {}).content || "").trim(), sources: [] };
-  }
-
-  function ask(seat, system, prompt, search, json) {
-    var c = S.seats[seat];
-    if (!c.m) return Promise.reject(new Error("No model chosen for this seat. Open Configure models."));
-    return c.p === "gemini" ? gemini(c.m, system, prompt, search, json) : ollama(c.m, system, prompt, json);
-  }
-  function clip(t) { return t.length > 1200 ? t.slice(0, 1200) + "..." : t; }
-
-  function parse(text) {
-    try {
-      var d = JSON.parse(text.replace(/^```(?:json)?|```$/gm, "").trim());
-      return { answer: String(d.answer || ""), confidence: String(d.confidence || "low").toLowerCase(), premise_flag: d.premise_flag || null, open_doubts: Array.isArray(d.open_doubts) ? d.open_doubts : [] };
-    } catch (e) {
-      return { answer: text, confidence: "low", premise_flag: null, open_doubts: ["The judge did not return structured output."] };
-    }
-  }
-
-  async function runDemo() {
-    note("Demo mode plays a saved run of the Einstein example. Switch to Live to check your own question.");
-    for (var i = 0; i < 4; i++) {
-      var n = LANES[i];
-      setLane(n, "working"); await sleep(1100);
-      setLane(n, "done", DEMO[n], n === "factchecker" ? [{ title: "nobelprize.org, Physics 1921", url: "" }] : null);
-    }
-    $("judging").hidden = false; await sleep(1200);
-    showVerdict(DEMO.verdict);
-    $("basetext").textContent = DEMO.baseline; $("base").hidden = false;
-  }
-
-  async function runLive(question) {
-    var results = {}, errors = {};
-    var q = "Statement or question:\n" + question;
-    var baseP = ask("baseline", "Answer the user's question.", question, false, false).catch(function (e) { return { error: e.message }; });
-
-    async function agent(name, prompt) {
-      setLane(name, "working");
-      try {
-        var r = await ask(name, BASE + ROLES[name][0], prompt, ROLES[name][1], false);
-        results[name] = r;
-        setLane(name, "done", r.text, r.sources);
-        if (name === "factchecker" && !r.sources.length && S.seats.factchecker.p !== "gemini") {
-          $("lane-factchecker").querySelector(".src").textContent = "Ollama has no search, so nothing was looked up.";
-        }
-      } catch (e) { errors[name] = e.message; setLane(name, "error", e.message); }
-    }
-    await Promise.all(["researcher", "skeptic", "factchecker"].map(function (n) { return agent(n, q); }));
-    if (!Object.keys(results).length) { note("No agent could answer. " + Object.values(errors)[0]); return; }
-
-    function notes() { return Object.keys(results).map(function (n) { return "[" + n + "]\n" + clip(results[n].text); }).join("\n\n"); }
-    await agent("advocate", q + "\n\nFirst-round notes:\n" + notes());
-
-    $("judging").hidden = false;
-    var v;
-    try { v = parse((await ask("judge", JUDGE, q + "\n\nPanel notes:\n" + notes(), false, true)).text); }
-    catch (e) { v = { answer: "", confidence: "low", premise_flag: null, open_doubts: ["The judge failed: " + e.message] }; }
-    Object.keys(errors).forEach(function (n) { v.open_doubts.push(n + " was unavailable: " + errors[n]); });
-    showVerdict(v);
-
-    var b = await baseP;
-    if (b.text) { $("basetext").textContent = b.text; $("base").hidden = false; }
-  }
-
-  async function run() {
-    var question = $("q").value.trim();
-    if (running) return;
-    if (question.length < 3) { note("Type a statement or question first."); return; }
-    save(); resetView(); running = true; $("run").disabled = true;
-    $("results").hidden = false;
-    try {
-      if (S.mode === "demo") await runDemo(); else await runLive(question);
-    } catch (e) { note("Something went wrong: " + e.message); }
-    running = false; $("run").disabled = false;
-  }
-
-  function known(p, m) { var l = MODELS[p]; return l.indexOf(m) > -1 || l.indexOf(m + ":latest") > -1; }
-
-  function fillLists() {
-    ["gemini", "ollama"].forEach(function (p) {
-      var dl = $("dl-" + p); dl.textContent = "";
-      MODELS[p].forEach(function (m) { var o = document.createElement("option"); o.value = m; dl.append(o); });
-    });
-    rows.forEach(function (r) { r.check(); });
-  }
-
-  function seatRow(seat, label) {
-    var row = document.createElement("div"); row.className = "seat";
-    var name = document.createElement("span"); name.className = "sname"; name.textContent = label;
-    var sel = document.createElement("select"); sel.setAttribute("aria-label", label + " provider");
-    [["gemini", "Gemini"], ["ollama", "Ollama"]].forEach(function (o) { var op = document.createElement("option"); op.value = o[0]; op.textContent = o[1]; sel.append(op); });
-    var inp = document.createElement("input"); inp.setAttribute("aria-label", label + " model");
-    var warn = document.createElement("span"); warn.className = "warn";
-    row.check = function () {
-      var c = S.seats[seat], msg = "";
-      inp.setAttribute("list", "dl-" + c.p);
-      if (seat === "factchecker" && c.p === "ollama") msg = "Ollama has no search, so this seat will not look anything up.";
-      else if (MODELS[c.p].length && c.m && !known(c.p, c.m)) msg = "Not in the " + (c.p === "gemini" ? "Gemini" : "installed Ollama") + " list.";
-      warn.textContent = msg;
-    };
-    row.sync = function () { sel.value = S.seats[seat].p; inp.value = S.seats[seat].m; row.check(); };
-    sel.addEventListener("change", function () {
-      var c = S.seats[seat]; c.p = sel.value;
-      if (MODELS[c.p].length && !known(c.p, c.m)) { c.m = MODELS[c.p][0]; inp.value = c.m; }
-      row.check(); save();
-    });
-    inp.addEventListener("input", function () { S.seats[seat].m = inp.value.trim(); row.check(); save(); });
-    row.append(name, sel, inp, warn); row.sync();
-    return row;
-  }
-
-  async function loadModels() {
-    var status = $("modelstatus"), parts = [];
-    status.textContent = "Loading…";
-    try {
-      var r = await fetch(OLLAMA + "/api/tags");
-      if (!r.ok) throw new Error("bad status");
-      MODELS.ollama = ((await r.json()).models || []).map(function (m) { return m.name; });
-      parts.push(MODELS.ollama.length + " Ollama models");
-    } catch (e) { MODELS.ollama = []; parts.push("Ollama not reachable"); }
-    if (S.key) {
-      try {
-        var g = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000", { headers: { "x-goog-api-key": S.key } });
-        if (!g.ok) throw new Error("bad status");
-        MODELS.gemini = ((await g.json()).models || [])
-          .filter(function (m) { return (m.supportedGenerationMethods || []).indexOf("generateContent") > -1; })
-          .map(function (m) { return m.name.replace(/^models\//, ""); });
-        parts.push(MODELS.gemini.length + " Gemini models");
-      } catch (e) { MODELS.gemini = []; parts.push("Gemini list failed (check key and internet)"); }
-    } else { parts.push("add a Gemini key to list Gemini models"); }
-    status.textContent = parts.join(", ") + ".";
-    fillLists();
-  }
-
-  var rows = SEATS.map(function (s) { var r = seatRow(s[0], s[1]); $("seats").append(r); return r; });
-  $("mode").value = S.mode; $("key").value = S.key;
-  $("mode").addEventListener("change", save); $("key").addEventListener("change", save);
-  $("loadmodels").addEventListener("click", function () { save(); loadModels(); });
-  $("allp").addEventListener("change", function () { $("allm").setAttribute("list", "dl-" + $("allp").value); });
-  $("applyall").addEventListener("click", function () {
-    var p = $("allp").value, m = $("allm").value.trim();
-    if (!m) return;
-    SEATS.forEach(function (s) { S.seats[s[0]] = { p: p, m: m }; });
-    rows.forEach(function (r) { r.sync(); }); save();
-  });
-  $("run").addEventListener("click", run);
-  $("clear").addEventListener("click", function () { $("q").value = ""; resetView(); });
-  $("example").addEventListener("click", function () { $("q").value = "In what year did Einstein win the Nobel Prize for relativity?"; });
-})();
-
-</script>
 </head>
 <body>
-<header><div class="logo-wrap"><span class="logo-mark" aria-hidden="true">I</span><strong class="logo">Iris</strong></div><div class="mode"><label for="mode">Mode</label><select id="mode"><option value="demo">Demo (works offline)</option><option value="live">Live (uses your model settings)</option></select></div></header>
+<header>
+<div class="brand"><div class="mark">I</div><div class="brand-copy"><strong>IRIS</strong><span>Fact intelligence</span></div></div>
+<div class="header-right"><div class="status-pill"><i class="dot" id="statusDot"></i><span id="statusText">Demo ready</span></div><div class="mode-wrap">MODE <select id="mode"><option value="demo">Demo · offline</option><option value="live">Live · Gemini / Ollama</option></select></div></div>
+</header>
 <main>
-<section class="hero"><div><div class="eyebrow">Multi-agent fact intelligence</div><h1>Check the question, then the answer.</h1><p class="lead">Four agents investigate independently, challenge the premise, test the evidence, and argue the opposite case before Iris gives its final judgment.</p></div><div class="hero-badge">Research → Challenge → Judge</div></section>
-<section class="pipeline" aria-label="Iris reasoning pipeline"><div class="pipe-step"><span class="pipe-kicker">01 · Investigate</span><span class="pipe-label">Independent research</span></div><div class="pipe-step"><span class="pipe-kicker">02 · Challenge</span><span class="pipe-label">Skeptic + evidence</span></div><div class="pipe-step"><span class="pipe-kicker">03 · Stress test</span><span class="pipe-label">Devil's advocate</span></div><div class="pipe-step"><span class="pipe-kicker">04 · Decide</span><span class="pipe-label">Judge + confidence</span></div></section>
-<details id="settings"><summary>Configure models</summary>
-<label class="keyl">Gemini key <input id="key" type="password" autocomplete="off" placeholder="Paste key from Google AI Studio"></label>
-<div class="row cfg"><button id="loadmodels" class="ghost">Load available models</button><span id="modelstatus" class="hint"></span></div>
-<div class="seat all"><span class="sname">All seats</span><select id="allp" aria-label="Provider for all seats"><option value="gemini">Gemini</option><option value="ollama">Ollama</option></select><input id="allm" list="dl-gemini" aria-label="Model for all seats" placeholder="Model name"><button id="applyall" class="ghost">Apply to all</button></div>
-<div id="seats"></div><p class="hint"><b>Demo:</b> double-click this file and use Demo mode — no server or API setup needed. <b>Live:</b> Gemini needs a key and internet; Ollama needs to be running locally.</p>
-<datalist id="dl-gemini"></datalist><datalist id="dl-ollama"></datalist></details>
-<section class="card question-card"><div class="question-head"><label for="q">Statement or question</label><span class="question-hint">Give Iris one claim to investigate</span></div>
-<textarea id="q" rows="3" placeholder="e.g. In what year did Einstein win the Nobel Prize for relativity?"></textarea>
-<div class="row"><button id="example" class="ghost">Use the Einstein example</button><span class="spacer"></span><button id="clear" class="ghost">Clear</button><button id="run" class="primary">Check it →</button></div></section>
-<p id="note" class="notice" hidden></p>
-<div id="results" class="cols" hidden>
-<section class="col"><div class="section-head"><h2>The panel</h2><span class="section-count">Independent reasoning</span></div>
-<article class="lane" id="lane-researcher" hidden><div class="head"><b>Researcher</b><span>Answers first</span></div><p class="body"></p><p class="src"></p></article>
-<article class="lane" id="lane-skeptic" hidden><div class="head"><b>Skeptic</b><span>Challenges the question</span></div><p class="body"></p><p class="src"></p></article>
-<article class="lane" id="lane-factchecker" hidden><div class="head"><b>Fact-checker</b><span>Looks it up</span></div><p class="body"></p><p class="src"></p></article>
-<article class="lane" id="lane-advocate" hidden><div class="head"><b>Devil's advocate</b><span>Pushes back on the group</span></div><p class="body"></p><p class="src"></p></article></section>
-<section class="col"><div class="section-head"><h2>The answer</h2><span class="section-count">Iris synthesis</span></div>
-<p id="judging" class="card judge-card muted" hidden><span class="judge-dot" aria-hidden="true"></span><span>Judge is reading the notes…</span></p>
-<div id="premise" class="flag" hidden><b>Premise flagged</b><p></p></div>
-<div id="verdict" class="card final" hidden><div class="final-kicker"><b class="muted">Iris, final answer</b><span class="verdict-badge">Panel verdict</span></div>
-<p id="answer" class="answer"></p><div class="confidence-row"><div class="confidence-track" aria-hidden="true"><div id="confbar" class="confidence-fill"></div></div><span id="conf" class="confidence-label"></span></div>
-<p class="doubts-label">Open doubts</p><ul id="doubts"></ul></div>
-<div id="base" class="card" hidden><b class="muted">Single model, same question</b><p id="basetext"></p></div></section></div>
-</main></body></html>
+<section class="hero">
+<div><div class="eyebrow"><i></i> Multi-agent fact checking</div><h1>Truth should survive a challenge.</h1><p class="lead">Iris sends one claim through independent research, premise checking, evidence search, and an adversarial pass before a judge returns the final answer.</p></div>
+<aside class="hero-side"><div class="tiny">Reasoning pipeline</div><div class="flow"><div><b>01 · Researcher</b><span>Direct answer</span></div><div><b>02 · Skeptic</b><span>Challenge premise</span></div><div><b>03 · Fact-checker</b><span>Find evidence</span></div><div><b>04 · Advocate</b><span>Try to break it</span></div><div><b>05 · Judge</b><span>Verdict + confidence</span></div></div></aside>
+</section>
+<section class="section">
+<div class="input-card"><div class="input-top"><label for="q">Claim to investigate</label><span>One statement or question</span></div><textarea id="q" placeholder="Try: In what year did Einstein win the Nobel Prize for relativity?"></textarea><div class="actions"><button class="btn example" id="example">Use the Einstein demo</button><button class="btn" id="clear">Clear</button><span class="spacer"></span><button class="btn primary" id="run">Run verification →</button></div></div>
+<div class="notice" id="notice"><b>Demo mode:</b> double-click this file and run the saved Einstein investigation. No server or API key is needed.</div>
+</section>
+<details class="settings"><summary>Model routing & API settings</summary><div class="settings-body">
+<div class="grid"><div class="field"><label for="key">Gemini API key</label><input id="key" type="password" autocomplete="off" placeholder="Paste your Google AI Studio key"></div><div class="field"><label for="provider">Default provider</label><select id="provider"><option value="gemini">Gemini</option><option value="ollama">Ollama</option></select></div><div class="field"><label for="model">Default model</label><input id="model" value="gemini-3.8-flash"></div><div class="field"><label>Secret handling</label><input value="Key stays in this page memory" disabled></div></div>
+<div class="settings-actions"><button class="btn" id="testApi">Test Gemini connection</button><button class="btn" id="loadModels">Load models</button><span class="settings-status" id="apiStatus">Not tested</span></div>
+<div class="seat-grid"><div class="seat-config"><b>Researcher</b><span>Direct answer</span></div><div class="seat-config"><b>Skeptic</b><span>Premise challenge</span></div><div class="seat-config"><b>Fact-checker</b><span>Google Search grounding</span></div><div class="seat-config"><b>Advocate</b><span>Adversarial review</span></div><div class="seat-config"><b>Judge</b><span>Structured synthesis</span></div><div class="seat-config"><b>Baseline</b><span>Single-model control</span></div></div>
+</div></details>
+<section class="progress" id="progress"><div class="progress-head"><h2>Live reasoning</h2><span id="progressText">Starting…</span></div><div class="bar"><i id="progressBar"></i></div></section>
+<section class="results" id="results"><div class="results-grid">
+<div class="panel-card"><div class="panel-head"><h2>The panel</h2><span>4 agents • independent first round</span></div><div class="agents">
+<article class="agent" id="agent-researcher"><div class="agent-top"><div class="agent-id"><div class="agent-icon">R</div><div><div class="agent-name">Researcher</div><div class="agent-role">Direct answer</div></div></div><span class="state">Queued</span></div><div class="agent-body">Waiting for the claim.</div><div class="source"></div></article>
+<article class="agent" id="agent-skeptic"><div class="agent-top"><div class="agent-id"><div class="agent-icon">S</div><div><div class="agent-name">Skeptic</div><div class="agent-role">Premise check</div></div></div><span class="state">Queued</span></div><div class="agent-body">Waiting for the claim.</div><div class="source"></div></article>
+<article class="agent" id="agent-factchecker"><div class="agent-top"><div class="agent-id"><div class="agent-icon">F</div><div><div class="agent-name">Fact-checker</div><div class="agent-role">Evidence search</div></div></div><span class="state">Queued</span></div><div class="agent-body">Waiting for the claim.</div><div class="source"></div></article>
+<article class="agent" id="agent-advocate"><div class="agent-top"><div class="agent-id"><div class="agent-icon">A</div><div><div class="agent-name">Devil's advocate</div><div class="agent-role">Adversarial pass</div></div></div><span class="state">Queued</span></div><div class="agent-body">Waiting for the first round.</div><div class="source"></div></article>
+</div></div>
+<div class="verdict-card"><div class="verdict-top"><div class="verdict-label">Iris final judgment</div><div class="badge" id="verdictBadge">Waiting</div></div><div class="answer" id="answer">Your verified answer will appear here.</div><div class="flag" id="flag" hidden><b>Premise flagged</b><span></span></div><div class="confidence" style="margin-top:15px"><div class="confidence-track"><i id="confidenceBar"></i></div><span id="confidence">—</span></div><div class="doubts-title">Open doubts</div><ul class="doubts" id="doubts"><li class="empty">None yet.</li></ul><div class="baseline" id="baseline" hidden><b>Single-model control</b><span id="baselineText"></span></div></div>
+</div></section>
+</main>
+<script>
+(function(){
+"use strict";
+var $=function(id){return document.getElementById(id)},lanes=["researcher","skeptic","factchecker","advocate"];
+var roles={researcher:["Answer the statement or question directly and accurately. State the answer first.",false],skeptic:["Check the premise before answering. Identify anything false, unproven, ambiguous, or loaded. If the premise is sound, say so plainly.",false],factchecker:["Use search. Break the claim into key factual assertions, mark them supported, contradicted, or unclear, and give one short line of evidence for each. Never guess.",true],advocate:["Read the first-round notes. Argue against the emerging view: give the strongest reason it could still be wrong or incomplete. Do not invent an objection.",false]};
+var judgeSystem='You are the judge of a fact-checking panel. Use only the supplied panel notes. Prefer evidence-backed claims. Reply with JSON only using exactly these keys: answer (string), confidence ("high"|"medium"|"low"), premise_flag (string or null), open_doubts (array of strings).';
+var demo={researcher:"Einstein won the Nobel Prize in Physics in 1921.",skeptic:"The wording assumes the 1921 prize was for relativity. That premise needs checking.",factchecker:"The 1921 Nobel Prize in Physics recognized Einstein's work in theoretical physics, especially the law of the photoelectric effect. It was not awarded for relativity.",advocate:"The relativity mix-up is understandable because it is his best-known work, but the prize citation does not name relativity.",verdict:{answer:"1921, but not for relativity. The Nobel Prize recognized Einstein's work in theoretical physics, especially the photoelectric effect.",confidence:"high",premise_flag:"The question assumes Einstein won the 1921 Nobel Prize for relativity. That is false.",open_doubts:[]},baseline:"Einstein won the Nobel Prize in Physics in 1921 for relativity."};
+var running=false,mode="demo";try{if(window.location.protocol!=="file:")mode=localStorage.getItem("irisMode")||"demo"}catch(e){}
+$("mode").value=mode;
+function setGlobalStatus(text,type){$("statusText").textContent=text;$("statusDot").style.background=type==="bad"?"#ff8d93":type==="busy"?"#9b7cf4":"#8ce99a"}
+function setNotice(html){$("notice").innerHTML=html}
+function setAgent(name,state,text,sources){var el=$("agent-"+name);el.className="agent "+state;el.querySelector(".state").textContent=state==="working"?"Working":state==="done"?"Done":state==="error"?"Error":"Queued";el.querySelector(".agent-body").textContent=state==="working"?"Thinking…":text||"Waiting.";var src=el.querySelector(".source");src.innerHTML="";(sources||[]).slice(0,3).forEach(function(s,i){var a=document.createElement("a");a.textContent=s.title||s.url||"Source";a.href=s.url||"#";a.target="_blank";a.rel="noopener";if(i===0)src.append("Sources: ");else src.append(", ");src.append(a)})}
+function resetAgents(){lanes.forEach(function(n){setAgent(n,"queued","Waiting for the claim.",[])});$("agent-advocate").querySelector(".agent-body").textContent="Waiting for the first round."}
+function setProgress(label,pct){$("progressText").textContent=label;$("progressBar").style.width=pct+"%"}
+function clip(t){t=String(t||"");return t.length>1400?t.slice(0,1400)+"…":t}
+function addNotes(results){return Object.keys(results).map(function(n){var r=results[n],src=(r.sources||[]).map(function(s){return s.title+" — "+s.url}).join("\\n");return "["+n+"]\\n"+clip(r.text)+(src?"\\nSources:\\n"+src:"")}).join("\\n\\n")}
+function parseJudge(text){try{var clean=String(text||"").replace(/^\\s*\\\`\\\`\\\`(?:json)?\\s*/i,"").replace(/\\s*\\\`\\\`\\\`\\s*$/,"").trim(),d=JSON.parse(clean);return{answer:String(d.answer||""),confidence:String(d.confidence||"low").toLowerCase(),premise_flag:d.premise_flag||null,open_doubts:Array.isArray(d.open_doubts)?d.open_doubts:[]}}catch(e){return{answer:String(text||""),confidence:"low",premise_flag:null,open_doubts:["The judge did not return structured JSON."]}}}
+async function readJsonResponse(r,provider){var raw=await r.text(),data={};try{data=JSON.parse(raw)}catch(e){}if(!r.ok){var msg=data&&data.error&&data.error.message?data.error.message:raw||("HTTP "+r.status);throw new Error(provider+" "+r.status+": "+msg.slice(0,280))}return data}
+async function gemini(model,system,prompt,search,json){
+var key=$("key").value.trim();if(!key)throw new Error("Add your Gemini API key in Model routing & API settings.");
+var body={systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{thinkingConfig:{thinkingLevel:"low"}}};
+if(search)body.tools=[{google_search:{}}];if(json)body.generationConfig.responseMimeType="application/json";
+var r;try{r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)})}catch(e){throw new Error("Gemini could not be reached from this browser. Check internet access or browser privacy extensions.")}
+var data=await readJsonResponse(r,"Gemini"),candidate=(data.candidates||[])[0];if(!candidate)throw new Error("Gemini returned no candidate. "+JSON.stringify(data.promptFeedback||{}));
+var text=((candidate.content&&candidate.content.parts)||[]).map(function(p){return p.text||""}).join("").trim();if(!text)throw new Error("Gemini returned no text (reason: "+(candidate.finishReason||"unknown")+")");
+var sources=((candidate.groundingMetadata&&candidate.groundingMetadata.groundingChunks)||[]).filter(function(x){return x.web}).map(function(x){return{title:x.web.title||x.web.uri,url:x.web.uri}});return{text:text,sources:sources}
+}
+async function ollama(model,system,prompt,json){
+var body={model:model,stream:false,messages:[{role:"system",content:system},{role:"user",content:prompt}],options:{temperature:.3}};if(json)body.format="json";var r;
+try{r=await fetch("http://localhost:11434/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})}catch(e){throw new Error("Ollama is not reachable. Start it with OLLAMA_ORIGINS=* ollama serve.")}
+var data=await readJsonResponse(r,"Ollama"),text=data&&data.message&&data.message.content?data.message.content.trim():"";if(!text)throw new Error("Ollama returned an empty response.");return{text:text,sources:[]}
+}
+async function ask(system,prompt,search,json){var provider=$("provider").value,model=$("model").value.trim();if(!model)throw new Error("Choose a model first.");return provider==="gemini"?gemini(model,system,prompt,search,json):ollama(model,system,prompt,json)}
+function showVerdict(v){var c=["high","medium","low"].indexOf(v.confidence)>-1?v.confidence:"low";$("answer").textContent=v.answer||"No answer returned.";$("confidence").textContent=c;$("confidenceBar").style.width=c==="high"?"92%":c==="medium"?"62%":"30%";$("verdictBadge").textContent=c==="high"?"High confidence":c==="medium"?"Medium confidence":"Low confidence";var flag=$("flag");flag.hidden=!v.premise_flag;if(v.premise_flag)flag.querySelector("span").textContent=v.premise_flag;var ul=$("doubts");ul.innerHTML="";(v.open_doubts&&v.open_doubts.length?v.open_doubts:["None"]).forEach(function(d){var li=document.createElement("li");li.textContent=d;ul.appendChild(li)})}
+async function runDemo(){setGlobalStatus("Demo running","busy");setNotice("<b>Demo mode:</b> saved Einstein investigation. No API calls are made.");$("progress").classList.add("show");$("results").classList.add("show");resetAgents();var order=["researcher","skeptic","factchecker","advocate"];for(var i=0;i<order.length;i++){var n=order[i];setAgent(n,"working");setProgress("Agent "+(i+1)+" of 4 · "+n,18+i*18);await new Promise(function(r){setTimeout(r,800)});setAgent(n,"done",demo[n],n==="factchecker"?[{title:"Nobel Prize — Physics 1921",url:"https://www.nobelprize.org/prizes/physics/1921/summary/"}]:[])}setProgress("Judge · synthesizing the panel",88);setGlobalStatus("Judging","busy");await new Promise(function(r){setTimeout(r,850)});showVerdict(demo.verdict);$("baseline").hidden=false;$("baselineText").textContent=demo.baseline;setProgress("Verification complete",100);setGlobalStatus("Demo ready","ok")}
+async function runLive(question){
+$("progress").classList.add("show");$("results").classList.add("show");resetAgents();setGlobalStatus("Connecting to API","busy");setProgress("Starting independent research",5);var results={},errors={};var base=ask("Answer the user's question directly and accurately.",question,false,false).catch(function(e){return{error:e.message}});
+async function agent(name,prompt){setAgent(name,"working");try{var r=await ask("You are one member of a fact-checking panel. Be concise, factual, and avoid preamble. "+roles[name][0],prompt,roles[name][1],false);results[name]=r;setAgent(name,"done",r.text,r.sources);return r}catch(e){errors[name]=e.message;setAgent(name,"error",e.message,[]);return null}}
+var q="Statement or question:\\n"+question;await Promise.all(["researcher","skeptic","factchecker"].map(function(n){return agent(n,q)}));if(!Object.keys(results).length){setGlobalStatus("API error","bad");showVerdict({answer:"Iris could not complete the check.",confidence:"low",premise_flag:null,open_doubts:Object.values(errors)});setProgress("No agent returned an answer",100);return}
+await agent("advocate",q+"\\n\\nFirst-round notes:\\n"+addNotes(results));setGlobalStatus("Judge is reviewing","busy");setProgress("Judge · comparing evidence and disagreements",86);var verdict;
+try{verdict=parseJudge((await ask(judgeSystem,q+"\\n\\nPanel notes:\\n"+addNotes(results),false,true)).text)}catch(e){verdict={answer:"The judge could not finish the synthesis.",confidence:"low",premise_flag:null,open_doubts:[e.message]}}
+Object.keys(errors).forEach(function(n){verdict.open_doubts.push(n+" unavailable: "+errors[n])});showVerdict(verdict);if(base&&base.text){$("baseline").hidden=false;$("baselineText").textContent=base.text}setProgress("Verification complete",100);setGlobalStatus("Live result ready","ok")
+}
+async function run(){if(running)return;var q=$("q").value.trim();if(q.length<3){setNotice("<b>Nothing to check yet.</b> Enter a statement or question first.");$("q").focus();return}running=true;$("run").disabled=true;try{if($("mode").value==="demo")await runDemo();else await runLive(q)}catch(e){setGlobalStatus("Run failed","bad");setNotice("<b>Run failed:</b> "+e.message);setProgress("Stopped",100)}finally{running=false;$("run").disabled=false}}
+async function testGemini(){var key=$("key").value.trim();if(!key){$("apiStatus").textContent="Paste a Gemini key first.";return}$("apiStatus").textContent="Testing…";setGlobalStatus("Testing API","busy");try{await gemini($("model").value.trim(),"You are a connection test.","Reply exactly: IRIS_OK",false,false);$("apiStatus").textContent="Gemini connection works.";setGlobalStatus("Gemini ready","ok")}catch(e){$("apiStatus").textContent=e.message;setGlobalStatus("Gemini error","bad")}}
+async function loadModels(){var key=$("key").value.trim();if(!key){$("apiStatus").textContent="Paste a Gemini key first.";return}$("apiStatus").textContent="Loading models…";try{var r=await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=1000",{headers:{"x-goog-api-key":key}}),data=await readJsonResponse(r,"Gemini"),models=(data.models||[]).filter(function(m){return(m.supportedGenerationMethods||[]).indexOf("generateContent")>-1}).map(function(m){return m.name.replace(/^models\\//,"")}),preferred=models.indexOf("gemini-3.8-flash")>-1?"gemini-3.8-flash":(models.find?models.find(function(m){return/^gemini-3/.test(m)}):models[0]);if(preferred)$("model").value=preferred;$("apiStatus").textContent=models.length+" generation models found. Using "+(preferred||"typed model")+"."}catch(e){$("apiStatus").textContent=e.message}}
+$("mode").addEventListener("change",function(){var m=$("mode").value;try{localStorage.setItem("irisMode",m)}catch(e){}if(m==="demo"){setGlobalStatus("Demo ready","ok");setNotice("<b>Demo mode:</b> saved Einstein investigation. No API calls are made.")}else{setGlobalStatus("Live mode","ok");setNotice("<b>Live mode:</b> enter a Gemini key, test it, then run a claim.")}});
+$("run").addEventListener("click",run);$("example").addEventListener("click",function(){$("q").value="In what year did Einstein win the Nobel Prize for relativity?";$("q").focus()});$("clear").addEventListener("click",function(){$("q").value="";$("results").classList.remove("show");$("progress").classList.remove("show");resetAgents();$("answer").textContent="Your verified answer will appear here.";setGlobalStatus("Ready","ok")});$("testApi").addEventListener("click",testGemini);$("loadModels").addEventListener("click",loadModels);$("q").addEventListener("keydown",function(e){if((e.ctrlKey||e.metaKey)&&e.key==="Enter")run()});$("provider").addEventListener("change",function(){if($("provider").value==="gemini"){$("model").value="gemini-3.8-flash";$("apiStatus").textContent="Gemini selected."}else{$("model").value="llama3.2";$("apiStatus").textContent="Ollama selected."}});resetAgents();
+})();
+</script>
+</body>
+</html>
