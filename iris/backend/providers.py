@@ -26,7 +26,8 @@ async def call_gemini(model, system, prompt, search=False, json_mode=False):
     # Gemini 3.8 Flash does not support the legacy temperature sampling parameter.
     if not model.startswith("gemini-3."):
         generation["temperature"] = 0.3
-    generation["thinkingConfig"] = {"thinkingLevel": os.getenv("GEMINI_THINKING_LEVEL", "low")}
+    if model.startswith("gemini-3."):
+        generation["thinkingConfig"] = {"thinkingLevel": os.getenv("GEMINI_THINKING_LEVEL", "low")}
     if json_mode:
         generation["responseMimeType"] = "application/json"
 
