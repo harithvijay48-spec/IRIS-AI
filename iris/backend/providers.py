@@ -24,7 +24,7 @@ async def call_gemini(model, system, prompt, search=False, json_mode=False):
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": 0.3},
+        "generationConfig": {},
     }
     if search:
         body["tools"] = [{"google_search": {}}]
