@@ -22,6 +22,7 @@
   var MODELS = { gemini: [], ollama: [] };
   var S = { mode: "demo", key: "", seats: {} };
   try { Object.assign(S, JSON.parse(localStorage.getItem("iris") || "{}")); } catch (e) {}
+  S.key = "";
   if (S.mode !== "demo") S.mode = "live";
   S.seats = S.seats || {};
   SEATS.forEach(function (s) { if (!S.seats[s[0]]) S.seats[s[0]] = { p: "gemini", m: "gemini-2.5-flash" }; });
@@ -29,7 +30,7 @@
 
   function save() {
     S.mode = $("mode").value; S.key = $("key").value.trim();
-    try { localStorage.setItem("iris", JSON.stringify(S)); } catch (e) {}
+    try { var safe = JSON.parse(JSON.stringify(S)); safe.key = ""; localStorage.setItem("iris", JSON.stringify(safe)); } catch (e) {}
   }
   function sleep(ms) { return new Promise(function (r) { setTimeout(r, ms); }); }
   function note(t) { $("note").hidden = !t; $("note").textContent = t || ""; }
