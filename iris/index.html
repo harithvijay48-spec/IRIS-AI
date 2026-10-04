@@ -78,7 +78,7 @@ function parseJudge(text){try{var clean=String(text||"").replace(/^\\s*\\\`\\\`\
 async function readJsonResponse(r,provider){var raw=await r.text(),data={};try{data=JSON.parse(raw)}catch(e){}if(!r.ok){var msg=data&&data.error&&data.error.message?data.error.message:raw||("HTTP "+r.status);throw new Error(provider+" "+r.status+": "+msg.slice(0,280))}return data}
 async function gemini(model,system,prompt,search,json){
 var key=$("key").value.trim();if(!key)throw new Error("Add your Gemini API key in Model routing & API settings.");
-var body={systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{thinkingConfig:{thinkingLevel:"low"}}};
+var generation={};if(/^gemini-3\./.test(model))generation.thinkingConfig={thinkingLevel:"low"};else generation.temperature=.3;var body={systemInstruction:{parts:[{text:system}]},contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:generation};
 if(search)body.tools=[{google_search:{}}];if(json)body.generationConfig.responseMimeType="application/json";
 var r;try{r=await fetch("https://generativelanguage.googleapis.com/v1beta/models/"+encodeURIComponent(model)+":generateContent",{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":key},body:JSON.stringify(body)})}catch(e){throw new Error("Gemini could not be reached from this browser. Check internet access or browser privacy extensions.")}
 var data=await readJsonResponse(r,"Gemini"),candidate=(data.candidates||[])[0];if(!candidate)throw new Error("Gemini returned no candidate. "+JSON.stringify(data.promptFeedback||{}));
