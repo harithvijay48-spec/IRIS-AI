@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iris — Multi-Agent Fact Checking</title>
+<link rel="stylesheet" href="iris/style.css"><script src="iris/app.js" defer></script>
+</head>
+<body>
+<header><div class="logo-wrap"><span class="logo-mark" aria-hidden="true">I</span><strong class="logo">Iris</strong></div><div class="mode"><label for="mode">Mode</label><select id="mode"><option value="demo">Demo (works offline)</option><option value="live">Live (uses your model settings)</option></select></div></header>
+<main>
+<section class="hero"><div><div class="eyebrow">Multi-agent fact intelligence</div><h1>Check the question, then the answer.</h1><p class="lead">Four agents investigate independently, challenge the premise, test the evidence, and argue the opposite case before Iris gives its final judgment.</p></div><div class="hero-badge">Research → Challenge → Judge</div></section>
+<section class="pipeline" aria-label="Iris reasoning pipeline"><div class="pipe-step"><span class="pipe-kicker">01 · Investigate</span><span class="pipe-label">Independent research</span></div><div class="pipe-step"><span class="pipe-kicker">02 · Challenge</span><span class="pipe-label">Skeptic + evidence</span></div><div class="pipe-step"><span class="pipe-kicker">03 · Stress test</span><span class="pipe-label">Devil's advocate</span></div><div class="pipe-step"><span class="pipe-kicker">04 · Decide</span><span class="pipe-label">Judge + confidence</span></div></section>
+<details id="settings"><summary>Configure models</summary>
+<label class="keyl">Gemini key <input id="key" type="password" autocomplete="off" placeholder="Paste key from Google AI Studio"></label>
+<div class="row cfg"><button id="loadmodels" class="ghost">Load available models</button><span id="modelstatus" class="hint"></span></div>
+<div class="seat all"><span class="sname">All seats</span><select id="allp" aria-label="Provider for all seats"><option value="gemini">Gemini</option><option value="ollama">Ollama</option></select><input id="allm" list="dl-gemini" aria-label="Model for all seats" placeholder="Model name"><button id="applyall" class="ghost">Apply to all</button></div>
+<div id="seats"></div><p class="hint">"Load available models" asks Ollama and Gemini what they actually offer, so the lists are real. You can still type any model name. Ollama must be started with <code>OLLAMA_ORIGINS=*</code>. Settings stay in this browser only.</p>
+<datalist id="dl-gemini"></datalist><datalist id="dl-ollama"></datalist></details>
+<section class="card question-card"><div class="question-head"><label for="q">Statement or question</label><span class="question-hint">Give Iris one claim to investigate</span></div>
+<textarea id="q" rows="3" placeholder="e.g. In what year did Einstein win the Nobel Prize for relativity?"></textarea>
+<div class="row"><button id="example" class="ghost">Use the Einstein example</button><span class="spacer"></span><button id="clear" class="ghost">Clear</button><button id="run" class="primary">Check it →</button></div></section>
+<p id="note" class="notice" hidden></p>
+<div id="results" class="cols" hidden>
+<section class="col"><div class="section-head"><h2>The panel</h2><span class="section-count">Independent reasoning</span></div>
+<article class="lane" id="lane-researcher" hidden><div class="head"><b>Researcher</b><span>Answers first</span></div><p class="body"></p><p class="src"></p></article>
+<article class="lane" id="lane-skeptic" hidden><div class="head"><b>Skeptic</b><span>Challenges the question</span></div><p class="body"></p><p class="src"></p></article>
+<article class="lane" id="lane-factchecker" hidden><div class="head"><b>Fact-checker</b><span>Looks it up</span></div><p class="body"></p><p class="src"></p></article>
+<article class="lane" id="lane-advocate" hidden><div class="head"><b>Devil's advocate</b><span>Pushes back on the group</span></div><p class="body"></p><p class="src"></p></article></section>
+<section class="col"><div class="section-head"><h2>The answer</h2><span class="section-count">Iris synthesis</span></div>
+<p id="judging" class="card judge-card muted" hidden><span class="judge-dot" aria-hidden="true"></span><span>Judge is reading the notes…</span></p>
+<div id="premise" class="flag" hidden><b>Premise flagged</b><p></p></div>
+<div id="verdict" class="card final" hidden><div class="final-kicker"><b class="muted">Iris, final answer</b><span class="verdict-badge">Panel verdict</span></div>
+<p id="answer" class="answer"></p><div class="confidence-row"><div class="confidence-track" aria-hidden="true"><div id="confbar" class="confidence-fill"></div></div><span id="conf" class="confidence-label"></span></div>
+<p class="doubts-label">Open doubts</p><ul id="doubts"></ul></div>
+<div id="base" class="card" hidden><b class="muted">Single model, same question</b><p id="basetext"></p></div></section></div>
+</main></body></html>
