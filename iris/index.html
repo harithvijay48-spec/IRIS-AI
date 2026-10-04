@@ -41,7 +41,8 @@ main{max-width:1180px;margin:0 auto;padding:50px 24px 76px;display:flex;flex-dir
   var S = { mode: "demo", key: "", seats: {} };
   try { Object.assign(S, JSON.parse(localStorage.getItem("iris") || "{}")); } catch (e) {}
   S.key = "";
-  if (S.mode !== "demo") S.mode = "live";
+  if (window.location.protocol === "file:") S.mode = "demo";
+  else if (S.mode !== "demo") S.mode = "live";
   S.seats = S.seats || {};
   SEATS.forEach(function (s) { if (!S.seats[s[0]]) S.seats[s[0]] = { p: "gemini", m: "gemini-3.8-flash" }; });
   var running = false;
