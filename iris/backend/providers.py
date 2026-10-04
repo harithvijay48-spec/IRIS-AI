@@ -35,6 +35,9 @@ async def call_gemini(model, system, prompt, search=False, json_mode=False):
         r = await client.post(url, json=body, headers={"x-goog-api-key": key})
     if r.status_code != 200:
         raise ProviderError(f"Gemini {r.status_code}: {r.text[:200]}")
+    payload = r.json()
+    if not payload.get("candidates"):
+        raise ProviderError(f"Gemini returned no candidate: {payload.get('promptFeedback', {})}")
     cand = (r.json().get("candidates") or [{}])[0]
     text = "".join(p.get("text", "") for p in cand.get("content", {}).get("parts", []))
     sources = []
@@ -71,6 +74,8 @@ async def _call(spec, system, prompt, search, json_mode):
         if provider == "gemini":
             return await call_gemini(model, system, prompt, search, json_mode)
         return await call_ollama(model, system, prompt, json_mode)
+    except httpx.TimeoutException as e:
+        raise ProviderError(f"{provider} timed out ({e.__class__.__name__})")
     except httpx.HTTPError as e:
         raise ProviderError(f"{provider} unreachable ({e.__class__.__name__})")
 
