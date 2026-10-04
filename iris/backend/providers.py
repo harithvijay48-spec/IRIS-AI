@@ -30,6 +30,8 @@ async def call_gemini(model, system, prompt, search=False, json_mode=False):
         body["tools"] = [{"google_search": {}}]
     if json_mode:
         body["generationConfig"]["responseMimeType"] = "application/json"
+    if not model.startswith("gemini-3."):
+        body["generationConfig"]["temperature"] = 0.3
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     async with httpx.AsyncClient(timeout=90) as client:
         r = await client.post(url, json=body, headers={"x-goog-api-key": key})
