@@ -25,7 +25,7 @@
   S.key = "";
   if (S.mode !== "demo") S.mode = "live";
   S.seats = S.seats || {};
-  SEATS.forEach(function (s) { if (!S.seats[s[0]]) S.seats[s[0]] = { p: "gemini", m: "gemini-2.5-flash" }; });
+  SEATS.forEach(function (s) { if (!S.seats[s[0]]) S.seats[s[0]] = { p: "gemini", m: "gemini-3.8-flash" }; });
   var running = false;
 
   function save() {
@@ -77,9 +77,10 @@
 
   async function gemini(model, system, prompt, search, json) {
     if (!S.key) throw new Error("Add your Gemini key in Settings.");
-    var body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3 } };
+    var body = { systemInstruction: { parts: [{ text: system }] }, contents: [{ role: "user", parts: [{ text: prompt }] }], generationConfig: {} };
     if (search) body.tools = [{ google_search: {} }];
     if (json) body.generationConfig.responseMimeType = "application/json";
+    if (!/^gemini-3\./.test(model)) body.generationConfig.temperature = 0.3;
     var r;
     try {
       r = await fetch("https://generativelanguage.googleapis.com/v1beta/models/" + encodeURIComponent(model) + ":generateContent", {
