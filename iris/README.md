@@ -1,25 +1,57 @@
-# Iris
+# IRIS — Fact Intelligence
 
-Four agents (Researcher, Skeptic, Fact-checker, Devil's advocate) check a statement, then a judge writes the answer, confidence and open doubts.
+IRIS runs a five-seat verification workflow: Researcher, Skeptic, Fact-checker, Devil's Advocate, and Judge. The browser interface communicates with the FastAPI backend; model credentials stay on the server.
 
-## Open it
-Download the repository ZIP, extract it, open the `iris` folder, and double-click **`index.html`**. The page is self-contained, so the polished UI does not depend on a local web server.
+## Requirements
 
-Modes:
-- Demo: saved Einstein investigation, works offline and needs no API key.
-- Live: enter a Gemini API key under "Model routing & API settings", use "Test Gemini connection", then run your own claim. Ollama is supported when it is running locally.
+- Python 3.10+
+- A Meta Model API key for the default configuration
+- Optional: Gemini API key or a local Ollama installation if you want to use those providers as fallbacks or per-seat overrides
 
-For the simplest jury demo, use **Demo mode** first. Live mode is there for showing the real Gemini-backed pipeline.
+## Run IRIS locally
 
-## Optional Python backend
-The Python backend is the server-side API version of the same pipeline. It keeps the Gemini key on the server, streams agent events over SSE, and supports Gemini or local Ollama providers.
+1. Open a terminal in the `iris/backend` folder.
+2. Create your local environment file:
 
-1. Copy `backend/.env.example` to `backend/.env`.
-2. Put your Gemini key in `GEMINI_API_KEY` if using Gemini.
-3. Install dependencies: `pip install -r requirements.txt`.
-4. Start the API from `iris/backend`: `uvicorn main:app --reload`.
-5. Check `/api/health` before testing `POST /api/check`.
+   ```powershell
+   Copy-Item .env.example .env
+   ```
 
-For a browser frontend served separately, set `CORS_ORIGINS` in `.env` to the exact frontend origin. Do not commit `.env`; it contains secrets.
+3. Open `backend/.env` and replace `MODEL_API_KEY` with your Meta Model API key. Do not share this key or commit `.env`.
+4. Install dependencies:
 
-The standalone frontend Live mode still supports direct Gemini/Ollama calls for the no-backend workflow. Demo mode remains fully offline.
+   ```powershell
+   py -m pip install -r requirements.txt
+   ```
+
+5. Start the backend:
+
+   ```powershell
+   py -m uvicorn main:app --host 127.0.0.1 --port 8000
+   ```
+
+6. Open **http://127.0.0.1:8000** in your browser. Use Demo mode for the offline Einstein example or Live mode to run the backend-powered verification pipeline.
+7. Check **http://127.0.0.1:8000/api/health** to see which providers are configured.
+
+Do not double-click `index.html` for Live mode. The standalone file can still show the offline demo, but Live mode requires the backend URL above.
+
+## Provider configuration
+
+The default model is `meta:muse-spark-1.3`. The Meta Model API key is read from `MODEL_API_KEY` (or `META_API_KEY`) in the backend environment and sent as a Bearer token by the server. You can change the model or override individual seats with `DEFAULT_MODEL` and `SEAT_*` variables.
+
+Gemini remains available with `GEMINI_API_KEY` and a seat setting such as `SEAT_FACTCHECKER=gemini:gemini-2.5-flash`. Ollama remains available through `OLLAMA_HOST` and a seat setting such as `SEAT_RESEARCHER=ollama:llama3.2`. Set `FALLBACK` to a configured provider spec if you want a fallback, for example `FALLBACK=gemini:gemini-2.5-flash`.
+
+## API
+
+- `GET /api/health` — backend and provider configuration status (never returns API keys).
+- `POST /api/check` — accepts `{"question":"..."}` and streams agent events using Server-Sent Events.
+
+## Important provider limitation
+
+The Meta Chat Completions integration currently uses text chat completions. It does not itself provide the Google Search grounding metadata used by the existing Gemini fact-checker path, so Meta-only runs may not return external source links. Evidence retrieval and evidence-aware judging are a later intelligence stage; do not interpret an uncited Meta response as independently verified.
+
+## Security
+
+- Keep `backend/.env` private and out of version control.
+- Never paste provider keys into the browser or source files.
+- Use a separate API key for this project and rotate it if it is exposed.

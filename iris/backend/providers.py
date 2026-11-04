@@ -7,14 +7,70 @@ load_dotenv()
 
 
 class ProviderError(Exception):
-    pass
+    """A provider failure that is safe to report to the application user."""
 
 
 def parse_spec(spec: str):
     provider, _, model = spec.partition(":")
-    if provider not in ("gemini", "ollama") or not model:
-        raise ProviderError(f"Bad model setting '{spec}'. Use gemini:<model> or ollama:<model>'.")
+    if provider not in ("gemini", "ollama", "meta") or not model:
+        raise ProviderError(
+            f"Bad model setting '{spec}'. Use meta:<model>, gemini:<model> or ollama:<model>."
+        )
     return provider, model
+
+
+async def call_meta(model, system, prompt, json_mode=False):
+    # Meta Model API uses a Bearer token. Never send this credential to the browser.
+    key = os.getenv("MODEL_API_KEY") or os.getenv("META_API_KEY")
+    if not key:
+        raise ProviderError("MODEL_API_KEY is not set in the backend environment")
+
+    if json_mode:
+        system = system + " Return valid JSON only, without Markdown fences or surrounding commentary."
+
+    body = {
+        "model": model,
+        "messages": [
+            {"role": "developer", "content": system},
+            {"role": "user", "content": prompt},
+        ],
+        "temperature": 0.3,
+    }
+    try:
+        async with httpx.AsyncClient(timeout=90) as client:
+            response = await client.post(
+                "https://api.meta.ai/v1/chat/completions",
+                json=body,
+                headers={
+                    "Authorization": f"Bearer {key}",
+                    "Content-Type": "application/json",
+                },
+            )
+    except httpx.TimeoutException as exc:
+        raise ProviderError("Meta Model API timed out") from exc
+    except httpx.HTTPError as exc:
+        raise ProviderError("Meta Model API is unreachable") from exc
+
+    if response.status_code != 200:
+        # Do not echo request headers or credentials into application errors.
+        try:
+            message = response.json().get("error", {}).get("message", "Request failed")
+        except (ValueError, AttributeError):
+            message = "Request failed"
+        if response.status_code == 401:
+            raise ProviderError("Meta Model API rejected the key (HTTP 401). Check MODEL_API_KEY.")
+        if response.status_code == 429:
+            raise ProviderError("Meta Model API rate limit reached (HTTP 429). Try again shortly.")
+        raise ProviderError(f"Meta Model API returned HTTP {response.status_code}: {str(message)[:180]}")
+
+    try:
+        payload = response.json()
+        text = payload["choices"][0]["message"]["content"].strip()
+    except (ValueError, KeyError, IndexError, TypeError, AttributeError) as exc:
+        raise ProviderError("Meta Model API returned an unexpected response format") from exc
+    if not text:
+        raise ProviderError("Meta Model API returned an empty response")
+    return text, []
 
 
 async def call_gemini(model, system, prompt, search=False, json_mode=False):
@@ -23,7 +79,7 @@ async def call_gemini(model, system, prompt, search=False, json_mode=False):
         raise ProviderError("GEMINI_API_KEY is not set")
 
     generation = {}
-    # Gemini 3.8 Flash does not support the legacy temperature sampling parameter.
+    # Gemini 3.x models do not support the legacy temperature sampling parameter.
     if not model.startswith("gemini-3."):
         generation["temperature"] = 0.3
     if model.startswith("gemini-3."):
@@ -42,28 +98,31 @@ async def call_gemini(model, system, prompt, search=False, json_mode=False):
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
     try:
         async with httpx.AsyncClient(timeout=90) as client:
-            r = await client.post(url, json=body, headers={"x-goog-api-key": key, "Content-Type": "application/json"})
-    except httpx.TimeoutException as e:
-        raise ProviderError(f"Gemini timed out ({e.__class__.__name__})")
-    except httpx.HTTPError as e:
-        raise ProviderError(f"Gemini unreachable ({e.__class__.__name__})")
+            response = await client.post(
+                url, json=body,
+                headers={"x-goog-api-key": key, "Content-Type": "application/json"},
+            )
+    except httpx.TimeoutException as exc:
+        raise ProviderError("Gemini timed out") from exc
+    except httpx.HTTPError as exc:
+        raise ProviderError("Gemini is unreachable") from exc
 
-    if r.status_code != 200:
+    if response.status_code != 200:
         try:
-            err = r.json().get("error", {}).get("message", r.text[:240])
-        except ValueError:
-            err = r.text[:240]
-        raise ProviderError(f"Gemini {r.status_code}: {err}")
+            message = response.json().get("error", {}).get("message", "Request failed")
+        except (ValueError, AttributeError):
+            message = "Request failed"
+        raise ProviderError(f"Gemini returned HTTP {response.status_code}: {str(message)[:180]}")
 
-    payload = r.json()
+    payload = response.json()
     candidates = payload.get("candidates") or []
     if not candidates:
-        raise ProviderError(f"Gemini returned no candidate: {payload.get('promptFeedback', {})}")
+        raise ProviderError("Gemini returned no candidate")
 
     candidate = candidates[0]
-    text = "".join(p.get("text", "") for p in candidate.get("content", {}).get("parts", [])).strip()
+    text = "".join(part.get("text", "") for part in candidate.get("content", {}).get("parts", [])).strip()
     if not text:
-        raise ProviderError(f"Gemini returned no text (reason: {candidate.get('finishReason', 'unknown')})")
+        raise ProviderError("Gemini returned no text")
 
     sources = []
     for chunk in candidate.get("groundingMetadata", {}).get("groundingChunks", []):
@@ -89,21 +148,23 @@ async def call_ollama(model, system, prompt, json_mode=False):
 
     try:
         async with httpx.AsyncClient(timeout=180) as client:
-            r = await client.post(f"{host}/api/chat", json=body, headers={"Content-Type": "application/json"})
-    except httpx.TimeoutException as e:
-        raise ProviderError(f"Ollama timed out ({e.__class__.__name__})")
-    except httpx.HTTPError as e:
-        raise ProviderError(f"Ollama unreachable ({e.__class__.__name__})")
+            response = await client.post(
+                f"{host}/api/chat", json=body,
+                headers={"Content-Type": "application/json"},
+            )
+    except httpx.TimeoutException as exc:
+        raise ProviderError("Ollama timed out") from exc
+    except httpx.HTTPError as exc:
+        raise ProviderError("Ollama is unreachable") from exc
 
-    if r.status_code != 200:
+    if response.status_code != 200:
         try:
-            err = r.json().get("error", r.text[:240])
+            message = response.json().get("error", "Request failed")
         except ValueError:
-            err = r.text[:240]
-        raise ProviderError(f"Ollama {r.status_code}: {err}")
+            message = "Request failed"
+        raise ProviderError(f"Ollama returned HTTP {response.status_code}: {str(message)[:180]}")
 
-    payload = r.json()
-    text = payload.get("message", {}).get("content", "").strip()
+    text = response.json().get("message", {}).get("content", "").strip()
     if not text:
         raise ProviderError("Ollama returned an empty response")
     return text, []
@@ -111,6 +172,8 @@ async def call_ollama(model, system, prompt, json_mode=False):
 
 async def _call(spec, system, prompt, search, json_mode):
     provider, model = parse_spec(spec)
+    if provider == "meta":
+        return await call_meta(model, system, prompt, json_mode)
     if provider == "gemini":
         return await call_gemini(model, system, prompt, search, json_mode)
     return await call_ollama(model, system, prompt, json_mode)
